@@ -13,6 +13,8 @@ const inputFieldEl = document.getElementById("input-field")
 const addButtonEl = document.getElementById("add-button")
 const shoppingListEl = document.getElementById("shopping-list")
 
+remove(shoppingListInDB)
+
 addButtonEl.addEventListener("click", function() {
     let inputValue = inputFieldEl.value
      
