@@ -1,5 +1,6 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"
-import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"
+import {initializeApp} from 'firebase/app'
+import {getDatabase, ref, push, onValue, remove, query, equalTo, orderByChild} from "firebase/database"
+import {v4 as uuid} from 'uuid'
 
 const appSettings = {
     databaseURL: "https://playground-864be-default-rtdb.europe-west1.firebasedatabase.app/"
@@ -13,34 +14,41 @@ const inputFieldEl = document.getElementById("input-field")
 const addButtonEl = document.getElementById("add-button")
 const shoppingListEl = document.getElementById("shopping-list")
 
-remove(shoppingListInDB)
+let user = null
 
-addButtonEl.addEventListener("click", function() {
+if (localStorage.getItem('user')) {
+    user = localStorage.getItem('user')
+} else {
+    user = uuid()
+
+    localStorage.setItem('user', user)
+}
+
+addButtonEl.addEventListener("click", function () {
     let inputValue = inputFieldEl.value
-     
+
     if (inputValue === "") {
         alert("Ürün girmediniz")
-    }else {
-    
-         push(shoppingListInDB, inputValue)
-         clearInputFieldEl()
+
+        return
     }
-    
+
+    push(shoppingListInDB, {user: user, value: inputValue})
+
+    clearInputFieldEl()
 })
 
-onValue(shoppingListInDB, function(snapshot) {
+onValue(query(shoppingListInDB, orderByChild('user'), equalTo(user)), function (snapshot) {
     if (snapshot.exists()) {
         let itemsArray = Object.entries(snapshot.val())
-    
+
         clearShoppingListEl()
-        
+
         for (let i = 0; i < itemsArray.length; i++) {
             let currentItem = itemsArray[i]
-            let currentItemID = currentItem[0]
-            let currentItemValue = currentItem[1]
-            
+
             appendItemToShoppingListEl(currentItem)
-        }    
+        }
     } else {
         shoppingListEl.innerHTML = "Hiç ürün girmediniz... :)"
     }
@@ -56,17 +64,17 @@ function clearInputFieldEl() {
 
 function appendItemToShoppingListEl(item) {
     let itemID = item[0]
-    let itemValue = item[1]
-    
+    let itemValue = item[1]?.value
+
     let newEl = document.createElement("li")
-    
+
     newEl.textContent = itemValue
-    
-    newEl.addEventListener("click", function() {
+
+    newEl.addEventListener("click", function () {
         let exactLocationOfItemInDB = ref(database, `shoppingList/${itemID}`)
-        
+
         remove(exactLocationOfItemInDB)
     })
-    
+
     shoppingListEl.append(newEl)
 }
